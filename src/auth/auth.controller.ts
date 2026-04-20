@@ -1,4 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { JwksService } from './jwks.service';
 
-@Controller('auth')
-export class AuthController {}
+@Controller()
+export class AuthController {
+  constructor(private readonly jwksService: JwksService) {}
+
+  @Get('.well-known/jwks.json')
+  getJwks() {
+    return this.jwksService.getJwks();
+  }
+}
