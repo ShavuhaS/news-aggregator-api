@@ -1,0 +1,8 @@
+name: dev
+variables:
+  - name: baseUrl
+    value: http://localhost:3000
+  - secret: true
+    name: refreshToken
+  - secret: true
+    name: accessToken

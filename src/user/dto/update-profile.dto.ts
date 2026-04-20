@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsArray } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -6,12 +6,6 @@ export class UpdateProfileDto {
   username?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  categoryIds?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  locationIds?: string[];
+  @IsString()
+  email?: string;
 }

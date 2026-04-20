@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { JwksService } from './jwks.service';
 import { RefreshAuthGuard } from './guards/refresh-auth.guard';
 import { TokensResponse } from './responses/tokens.response';
 import type { Response } from 'express';
@@ -17,7 +16,6 @@ export class AuthController {
 	
   constructor(
     private readonly authService: AuthService,
-    private readonly jwksService: JwksService,
     private readonly configService: ConfigService,
   ) {
     this.env = this.configService.get<string>('env')!;
