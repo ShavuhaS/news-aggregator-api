@@ -1,0 +1,132 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [postgis]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ComplaintStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id                  String                  @id @default(uuid()) @map("id")
+  email               String                  @unique @map("email")
+  username            String                  @unique @map("username")
+  password            String?                 @map("password")
+  googleId            String?                 @unique @map("google_id")
+  role                Role                    @default(USER) @map("role")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+  preferredCategories UserPreferredCategory[]
+  preferredLocations  UserPreferredLocation[]
+  complaints          Complaint[]
+
+  @@map("users")
+}
+
+model NewsCategory {
+  id        String                  @id @default(uuid()) @map("id")
+  name      String                  @unique @map("name")
+  createdAt DateTime                @default(now()) @map("created_at")
+  updatedAt DateTime                @updatedAt @map("updated_at")
+  news      News[]
+  users     UserPreferredCategory[]
+
+  @@map("news_categories")
+}
+
+model Location {
+  id           String                                @id @default(uuid()) @map("id")
+  lemma        String                                @map("lemma")
+  address      String                                @unique @map("address")
+  originalText String                                @map("original_text")
+  lat          Float                                 @map("lat")
+  lon          Float                                 @map("lon")
+  coords       Unsupported("geometry(Point, 4326)")? @map("coords")
+  createdAt    DateTime                              @default(now()) @map("created_at")
+  updatedAt    DateTime                              @updatedAt @map("updated_at")
+  news         NewsLocation[]
+  users         UserPreferredLocation[]
+
+  @@map("locations")
+}
+
+model News {
+  id             String         @id @default(uuid()) @map("id")
+  title          String         @map("title")
+  description    String         @map("description")
+  link           String         @unique @map("link")
+  imageUrl       String?        @map("image_url")
+  publishedAt    DateTime?      @map("published_at")
+  sentimentScore Float?         @map("sentiment_score")
+  sourceId       String         @map("source_id")
+  categoryId     String         @map("category_id")
+  category       NewsCategory   @relation(fields: [categoryId], references: [id])
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  locations      NewsLocation[]
+  complaints     Complaint[]
+
+  @@map("news")
+}
+
+model Complaint {
+  id        String          @id @default(uuid()) @map("id")
+  newsId    String          @map("news_id")
+  news      News            @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  userId    String          @map("user_id")
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String          @map("reason")
+  status    ComplaintStatus @default(PENDING) @map("status")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  @@map("complaints")
+}
+
+model UserPreferredCategory {
+  userId     String       @map("user_id")
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String       @map("category_id")
+  category   NewsCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  @@id([userId, categoryId])
+  @@map("user_preferred_categories")
+}
+
+model UserPreferredLocation {
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locationId String   @map("location_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@id([userId, locationId])
+  @@map("user_preferred_locations")
+}
+
+model NewsLocation {
+  newsId     String   @map("news_id")
+  news       News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  locationId String   @map("location_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@id([newsId, locationId])
+  @@map("news_locations")
+}
