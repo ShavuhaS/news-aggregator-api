@@ -19,6 +19,11 @@ export class NewsController {
     return this.newsService.listNews(query);
   }
 
+  @Get('complaints')
+  async listNewsWithComplaints(@Query() query: ListComplaintsQueryDto) {
+    return this.newsService.listNewsWithComplaints(query);
+  }
+
   @Get(':id')
   async getNewsById(@Param('id') id: string) {
     const news = await this.newsService.getNewsById(id);

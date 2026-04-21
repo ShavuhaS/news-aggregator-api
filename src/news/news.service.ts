@@ -7,6 +7,7 @@ import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import { NewsResponse } from './responses/news.response';
+import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
 import { ComplaintResponse } from './responses/complaint.response';
 import { Prisma } from '@prisma/client';
 
@@ -242,6 +243,40 @@ export class NewsService {
 
     return {
       data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      page,
+      pageSize,
+    };
+  }
+
+  async listNewsWithComplaints(query: ListComplaintsQueryDto): Promise<PaginatedResponse<NewsWithComplaintsResponse>> {
+    const { page = 1, pageSize = 20 } = query;
+
+    const [data, totalCount] = await Promise.all([
+      this.prisma.news.findMany({
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: {
+          complaints: { _count: 'desc' },
+        },
+        include: {
+          category: true,
+          _count: {
+            select: { complaints: true },
+          },
+        },
+      }),
+      this.prisma.news.count(),
+    ]);
+
+    const formattedData: NewsWithComplaintsResponse[] = data.map((item) => ({
+      ...item,
+      complaintsCount: item._count.complaints,
+    })) as NewsWithComplaintsResponse[];
+
+    return {
+      data: formattedData,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       page,
