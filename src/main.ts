@@ -12,16 +12,13 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // Global Filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // Enable CORS
   app.enableCors({
     origin: configService.get<string>('frontendUrl'),
     credentials: true,
   });
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -33,7 +30,6 @@ async function bootstrap() {
     }),
   );
 
-  // Kafka Microservice
   const kafkaBrokers = configService.get<string[]>('kafka.brokers');
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.KAFKA,

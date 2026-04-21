@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ParserSourceResponse } from './interfaces/parser-source.interface';
@@ -57,7 +58,9 @@ export class NewsService {
       });
 
       if (existingNews) {
-        this.logger.log(`News with link ${data.link} already exists. Skipping.`);
+        this.logger.log(
+          `News with link ${data.link} already exists. Skipping.`,
+        );
         return existingNews;
       }
 
@@ -488,5 +491,23 @@ export class NewsService {
       page,
       pageSize,
     };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanupOldNews() {
+    this.logger.log('Starting old news cleanup job...');
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    const result = await this.prisma.news.deleteMany({
+      where: {
+        OR: [
+          { publishedAt: { lt: oneMonthAgo } },
+          { createdAt: { lt: oneMonthAgo } },
+        ],
+      },
+    });
+
+    this.logger.log(`Cleanup finished. Deleted ${result.count} news items.`);
   }
 }

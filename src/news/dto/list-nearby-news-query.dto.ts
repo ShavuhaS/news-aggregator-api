@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsInt, Min, Max, IsNumber } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ListNearbyNewsQueryDto {
