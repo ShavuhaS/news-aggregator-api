@@ -23,6 +23,7 @@ import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { ListLocationsQueryDto } from './dto/list-locations-query.dto';
 import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
+import { ListNearbyNewsQueryDto } from './dto/list-nearby-news-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -45,6 +46,11 @@ export class NewsController {
   @Get('categories')
   async listCategories(@Query() query: ListCategoriesQueryDto) {
     return this.newsService.listCategories(query);
+  }
+
+  @Get('nearby')
+  async listNearbyNews(@Query() query: ListNearbyNewsQueryDto) {
+    return this.newsService.listNearbyNews(query);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

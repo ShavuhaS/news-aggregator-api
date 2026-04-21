@@ -15,6 +15,7 @@ import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { ListLocationsQueryDto } from './dto/list-locations-query.dto';
 import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
+import { ListNearbyNewsQueryDto } from './dto/list-nearby-news-query.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import {
   NewsResponse,
@@ -56,9 +57,7 @@ export class NewsService {
       });
 
       if (existingNews) {
-        this.logger.log(
-          `News with link ${data.link} already exists. Skipping.`,
-        );
+        this.logger.log(`News with link ${data.link} already exists. Skipping.`);
         return existingNews;
       }
 
@@ -424,6 +423,66 @@ export class NewsService {
 
     return {
       data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      page,
+      pageSize,
+    };
+  }
+
+  async listNearbyNews(
+    query: ListNearbyNewsQueryDto,
+  ): Promise<PaginatedResponse<NewsResponse>> {
+    const { lat, lon, dist, page = 1, pageSize = 20, search } = query;
+    const offset = (page - 1) * pageSize;
+
+    const searchFilter = search
+      ? Prisma.sql`AND (n.title ILIKE ${'%' + search + '%'} OR n.description ILIKE ${'%' + search + '%'})`
+      : Prisma.empty;
+
+    const data = await this.prisma.$queryRaw<any[]>`
+      SELECT DISTINCT n.*, 
+             json_build_object('id', c.id, 'name', n_c.name) as category
+      FROM news n
+      JOIN news_categories n_c ON n.category_id = n_c.id
+      JOIN news_locations nl ON n.id = nl.news_id
+      JOIN locations l ON nl.location_id = l.id
+      JOIN news_categories c ON n.category_id = c.id
+      WHERE ST_DWithin(
+        l.coords::geography, 
+        ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)::geography, 
+        ${dist} * 1000
+      )
+      ${searchFilter}
+      ORDER BY n.published_at DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `;
+
+    const totalCountResult = await this.prisma.$queryRaw<any[]>`
+      SELECT COUNT(DISTINCT n.id) as count
+      FROM news n
+      JOIN news_locations nl ON n.id = nl.news_id
+      JOIN locations l ON nl.location_id = l.id
+      WHERE ST_DWithin(
+        l.coords::geography, 
+        ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)::geography, 
+        ${dist} * 1000
+      )
+      ${searchFilter}
+    `;
+
+    const totalCount = Number(totalCountResult[0].count);
+
+    return {
+      data: data.map((item) => ({
+        ...item,
+        publishedAt: item.published_at,
+        sentimentScore: item.sentiment_score,
+        sourceId: item.source_id,
+        categoryId: item.category_id,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      })) as NewsResponse[],
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       page,
