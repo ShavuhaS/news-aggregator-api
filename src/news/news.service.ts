@@ -4,7 +4,7 @@ import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ParserSourceResponse } from './interfaces/parser-source.interface';
 import { AdminParserClient } from './clients/admin-parser.client';
 import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
-import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
+import { PaginatedResponse } from '../common/responses/paginated.response';
 import { NewsResponse } from './responses/news.response';
 import { Prisma } from '@prisma/client';
 
@@ -203,6 +203,29 @@ export class NewsService {
       totalPages: Math.ceil(totalCount / pageSize),
       page,
       pageSize,
+    };
+  }
+
+  async getNewsById(id: string): Promise<any> {
+    const news = await this.prisma.news.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        locations: {
+          include: { location: true },
+        },
+        _count: {
+          select: { complaints: true },
+        },
+      },
+    });
+
+    if (!news) return null;
+
+    return {
+      ...news,
+      locations: news.locations.map((loc) => loc.location),
+      complaintsCount: news._count.complaints,
     };
   }
 }

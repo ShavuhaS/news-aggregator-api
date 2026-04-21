@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Param, NotFoundException } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
@@ -17,4 +17,14 @@ export class NewsController {
   async listNews(@Query() query: ListNewsQueryDto) {
     return this.newsService.listNews(query);
   }
+
+  @Get(':id')
+  async getNewsById(@Param('id') id: string) {
+    const news = await this.newsService.getNewsById(id);
+    if (!news) {
+      throw new NotFoundException('News not found');
+    }
+    return news;
+  }
 }
+
