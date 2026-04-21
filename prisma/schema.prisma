@@ -59,6 +59,7 @@ model Location {
   news         NewsLocation[]
   users         UserPreferredLocation[]
 
+  @@index([coords], type: Gist)
   @@map("locations")
 }
 
@@ -83,8 +84,8 @@ model News {
 
 model Complaint {
   id        String          @id @default(uuid()) @map("id")
-  newsId    String          @map("news_id")
-  news      News            @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  newsId    String?          @map("news_id")
+  news      News?            @relation(fields: [newsId], references: [id], onDelete: SetNull)
   userId    String          @map("user_id")
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   reason    String          @map("reason")
@@ -92,6 +93,7 @@ model Complaint {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
+  @@unique([newsId, userId])
   @@map("complaints")
 }
 
