@@ -41,6 +41,7 @@ export class AuthController {
       httpOnly: true,
       secure: this.env === 'production',
       sameSite: 'lax',
+      path: '/auth/refresh',
     });
   }
 
