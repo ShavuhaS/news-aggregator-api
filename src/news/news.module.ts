@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { NewsController } from './news.controller';
+import { ParserController } from './parser.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ParserClient } from './clients/parser.client';
 import { AdminParserClient } from './clients/admin-parser.client';
@@ -9,7 +10,7 @@ import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [PrismaModule, AuthModule, JwtModule.register({})],
-  controllers: [NewsController],
+  controllers: [NewsController, ParserController],
   providers: [NewsService, ParserClient, AdminParserClient],
   exports: [NewsService],
 })
