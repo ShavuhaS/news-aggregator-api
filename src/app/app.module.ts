@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
+import { NewsModule } from '../news/news.module';
 import configuration from '../config/configuration';
 import { validationSchema } from '../config/validation';
 
@@ -18,6 +19,7 @@ import { validationSchema } from '../config/validation';
     PrismaModule,
     AuthModule,
     UserModule,
+    NewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

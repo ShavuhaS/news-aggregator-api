@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,6 +32,22 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Kafka Microservice
+  const kafkaBrokers = configService.get<string[]>('kafka.brokers');
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        brokers: kafkaBrokers || ['localhost:9092'],
+      },
+      consumer: {
+        groupId: 'aggregator-api-consumer',
+      },
+    },
+  });
+
+  await app.startAllMicroservices();
 
   const port = configService.get<number>('port') || 3000;
   await app.listen(port);

@@ -24,11 +24,18 @@ export class AuthService {
     private jwksService: JwksService,
   ) {
     this.privateKey = this.configService.get<string>('jwt.privateKey')!;
-    this.accessTokenExpiresIn = this.configService.get<string>('jwt.accessTokenExpiresIn')!;
-    this.refreshTokenExpiresIn = this.configService.get<string>('jwt.refreshTokenExpiresIn')!;
+    this.accessTokenExpiresIn = this.configService.get<string>(
+      'jwt.accessTokenExpiresIn',
+    )!;
+    this.refreshTokenExpiresIn = this.configService.get<string>(
+      'jwt.refreshTokenExpiresIn',
+    )!;
   }
 
-  async validateUser(identifier: string, pass: string): Promise<SafeUser | null> {
+  async validateUser(
+    identifier: string,
+    pass: string,
+  ): Promise<SafeUser | null> {
     const user = await this.userService.findByEmailOrUsername(identifier);
     if (user && user.password && (await bcrypt.compare(pass, user.password))) {
       const { password, ...result } = user;

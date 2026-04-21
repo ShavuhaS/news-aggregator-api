@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { User, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -26,12 +31,12 @@ export class UserService {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ 
+    return this.prisma.user.findUnique({
       where: { id },
       include: {
         preferredCategories: { include: { category: true } },
         preferredLocations: { include: { location: true } },
-      }
+      },
     });
   }
 
@@ -75,7 +80,9 @@ export class UserService {
   }
 
   async addCategory(userId: string, categoryId: string) {
-    const category = await this.prisma.newsCategory.findUnique({ where: { id: categoryId } });
+    const category = await this.prisma.newsCategory.findUnique({
+      where: { id: categoryId },
+    });
     if (!category) {
       throw new BadRequestException('Category does not exist');
     }
@@ -88,15 +95,19 @@ export class UserService {
   }
 
   async removeCategory(userId: string, categoryId: string) {
-    return this.prisma.userPreferredCategory.delete({
-      where: { userId_categoryId: { userId, categoryId } },
-    }).catch(() => {
-      throw new NotFoundException('Category preference not found');
-    });
+    return this.prisma.userPreferredCategory
+      .delete({
+        where: { userId_categoryId: { userId, categoryId } },
+      })
+      .catch(() => {
+        throw new NotFoundException('Category preference not found');
+      });
   }
 
   async addLocation(userId: string, locationId: string) {
-    const location = await this.prisma.location.findUnique({ where: { id: locationId } });
+    const location = await this.prisma.location.findUnique({
+      where: { id: locationId },
+    });
     if (!location) {
       throw new BadRequestException('Location does not exist');
     }
@@ -109,10 +120,12 @@ export class UserService {
   }
 
   async removeLocation(userId: string, locationId: string) {
-    return this.prisma.userPreferredLocation.delete({
-      where: { userId_locationId: { userId, locationId } },
-    }).catch(() => {
-      throw new NotFoundException('Location preference not found');
-    });
+    return this.prisma.userPreferredLocation
+      .delete({
+        where: { userId_locationId: { userId, locationId } },
+      })
+      .catch(() => {
+        throw new NotFoundException('Location preference not found');
+      });
   }
 }

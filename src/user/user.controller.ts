@@ -1,4 +1,16 @@
-import { Controller, Get, UseGuards, Request, Patch, Body, Post, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Request,
+  Patch,
+  Body,
+  Post,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
 import { UserResponse } from './responses/user.response';
@@ -17,7 +29,10 @@ export class UserController {
   }
 
   @Patch()
-  async updateProfile(@Request() req, @Body() data: UpdateProfileDto): Promise<UserResponse> {
+  async updateProfile(
+    @Request() req,
+    @Body() data: UpdateProfileDto,
+  ): Promise<UserResponse> {
     const user = await this.userService.update(req.user.id, data);
     const { password, ...result } = user;
     return result as UserResponse;

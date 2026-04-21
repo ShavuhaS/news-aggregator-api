@@ -18,7 +18,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let errorName = 'InternalServerError';
-    let errors: Record<string, string[]> | null = null;
+    let errors: any = null;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -27,12 +27,21 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const res = exceptionResponse as any;
-        
-        if (status === HttpStatus.BAD_REQUEST && Array.isArray(res.message) && typeof res.message[0] === 'object') {
+
+        if (res.errors && !Array.isArray(res.errors)) {
+          errors = res.errors;
+          message = res.message || 'Validation failed';
+        } else if (
+          status === HttpStatus.BAD_REQUEST &&
+          Array.isArray(res.message) &&
+          typeof res.message[0] === 'object'
+        ) {
           errors = this.formatValidationErrors(res.message);
           message = 'Validation failed';
         } else {
-          message = res.message || exception.message;
+          message = Array.isArray(res.message)
+            ? res.message[0]
+            : res.message || exception.message;
         }
       } else {
         message = exception.message;
@@ -51,7 +60,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     });
   }
 
-  private formatValidationErrors(validationErrors: ValidationError[]): Record<string, string[]> {
+  private formatValidationErrors(
+    validationErrors: ValidationError[],
+  ): Record<string, string[]> {
     const result: Record<string, string[]> = {};
 
     validationErrors.forEach((error) => {

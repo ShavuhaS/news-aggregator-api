@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -12,8 +21,8 @@ import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from './constants';
 @Controller('auth')
 export class AuthController {
   private env: string;
-  private frontendUrl: string; 
-	
+  private frontendUrl: string;
+
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
@@ -36,7 +45,10 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) res: Response): Promise<TokensResponse> {
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<TokensResponse> {
     const tokens = await this.authService.register(registerDto);
     this.setCookies(res, tokens);
     return tokens;
@@ -44,7 +56,10 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req, @Res({ passthrough: true }) res: Response): Promise<TokensResponse> {
+  async login(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<TokensResponse> {
     const tokens = await this.authService.login(req.user);
     this.setCookies(res, tokens);
     return tokens;
@@ -52,7 +67,10 @@ export class AuthController {
 
   @UseGuards(RefreshAuthGuard)
   @Post('refresh')
-  async refresh(@Request() req, @Res({ passthrough: true }) res: Response): Promise<TokensResponse> {
+  async refresh(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<TokensResponse> {
     const tokens = await this.authService.refreshTokens(req.user);
     this.setCookies(res, tokens);
     return tokens;
