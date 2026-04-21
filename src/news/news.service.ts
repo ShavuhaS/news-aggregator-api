@@ -368,8 +368,13 @@ export class NewsService {
     const news = await this.prisma.news.findUnique({ where: { id: newsId } });
     if (!news) throw new NotFoundException('News not found');
 
-    return this.prisma.complaint.create({
-      data: {
+    return this.prisma.complaint.upsert({
+      where: { newsId_userId: { newsId, userId } },
+      update: {
+        reason: data.reason,
+        status: 'PENDING',
+      },
+      create: {
         newsId,
         userId,
         reason: data.reason,
