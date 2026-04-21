@@ -1,0 +1,25 @@
+info:
+  name: Update source status
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/parser/sources/:id/status"
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "active": true
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,19 @@
+info:
+  name: Resolve news complaints
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{baseUrl}}/news/:id/complaints/resolve"
+  params:
+    - name: id
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

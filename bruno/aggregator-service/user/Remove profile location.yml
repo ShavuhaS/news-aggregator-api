@@ -1,0 +1,19 @@
+info:
+  name: Remove profile location
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/user/profile/locations/:locationId"
+  params:
+    - name: locationId
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

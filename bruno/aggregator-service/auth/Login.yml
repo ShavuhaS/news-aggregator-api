@@ -22,9 +22,6 @@ runtime:
         if (res.status.toString().startsWith('2')) {
           bru.setEnvVar('accessToken', res.body.accessToken);
           bru.setEnvVar('refreshToken', res.body.refreshToken);
-        } else {
-          bru.setEnvVar('accessToken', res.body.refreshToken);
-          bru.setEnvVar('refreshToken', '');
         }
 
 settings:

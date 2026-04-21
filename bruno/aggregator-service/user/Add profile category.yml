@@ -1,0 +1,19 @@
+info:
+  name: Add profile category
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/user/profile/categories/:categoryId"
+  params:
+    - name: categoryId
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

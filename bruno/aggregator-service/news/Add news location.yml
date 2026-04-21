@@ -1,0 +1,25 @@
+info:
+  name: Add news location
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{baseUrl}}/news/:id/locations"
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "locationId": "uuid-of-the-location"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

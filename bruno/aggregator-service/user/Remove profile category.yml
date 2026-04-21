@@ -1,0 +1,19 @@
+info:
+  name: Remove profile category
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/user/profile/categories/:categoryId"
+  params:
+    - name: categoryId
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

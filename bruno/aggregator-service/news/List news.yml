@@ -1,0 +1,49 @@
+info:
+  name: List news
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/news?page=1&pageSize=20&categoryId=&locationId=&minSentiment=-1&maxSentiment=1&from=&to=&search=&sortBy=sentiment&sortOrder=desc"
+  params:
+    - name: page
+      value: "1"
+      type: query
+    - name: pageSize
+      value: "20"
+      type: query
+    - name: categoryId
+      value: ""
+      type: query
+    - name: locationId
+      value: ""
+      type: query
+    - name: minSentiment
+      value: "-1"
+      type: query
+    - name: maxSentiment
+      value: "1"
+      type: query
+    - name: from
+      value: ""
+      type: query
+    - name: to
+      value: ""
+      type: query
+    - name: search
+      value: ""
+      type: query
+    - name: sortBy
+      value: sentiment
+      type: query
+    - name: sortOrder
+      value: desc
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

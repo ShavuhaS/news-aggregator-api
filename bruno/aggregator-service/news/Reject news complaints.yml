@@ -1,0 +1,19 @@
+info:
+  name: Reject news complaints
+  type: http
+  seq: 13
+
+http:
+  method: POST
+  url: "{{baseUrl}}/news/:id/complaints/reject"
+  params:
+    - name: id
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

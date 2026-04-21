@@ -1,0 +1,25 @@
+info:
+  name: Create news complaint
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/news/:id/complaints"
+  params:
+    - name: id
+      value: 4ed3bf19-3676-45e5-b655-e416b71fdfbd
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "reason": "."
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

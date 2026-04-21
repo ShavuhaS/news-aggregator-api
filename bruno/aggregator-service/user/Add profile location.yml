@@ -1,0 +1,19 @@
+info:
+  name: Add profile location
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/user/profile/locations/:locationId"
+  params:
+    - name: locationId
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,27 @@
+info:
+  name: Create source
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/parser/sources"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "24 канал - Економіка",
+        "url": "https://24tv.ua/rss/all.xml?googleFlg=true&tagId=4638",
+        "type": "RSS",
+        "active": true,
+        "schedule": "5 * * * *",
+        "configuration": {},
+        "logoUrl": "https://24tv.ua/favicon.ico"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

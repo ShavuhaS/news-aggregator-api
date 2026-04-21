@@ -1,0 +1,28 @@
+info:
+  name: Update source basic
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/parser/sources/:id"
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Updated Source Name",
+        "url": "https://example.com/rss",
+        "schedule": "0 * * * *",
+        "logoUrl": "https://example.com/logo.png"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

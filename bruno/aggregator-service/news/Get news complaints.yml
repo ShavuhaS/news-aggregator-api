@@ -1,0 +1,25 @@
+info:
+  name: Get news complaints
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{baseUrl}}/news/:id/complaints"
+  params:
+    - name: id
+      value: ""
+      type: path
+    - name: page
+      value: "1"
+      type: query
+    - name: pageSize
+      value: "20"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

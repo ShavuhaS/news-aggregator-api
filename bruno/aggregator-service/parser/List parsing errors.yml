@@ -1,0 +1,31 @@
+info:
+  name: List parsing errors
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/parser/sources/errors"
+  params:
+    - name: page
+      value: "1"
+      type: query
+    - name: pageSize
+      value: "20"
+      type: query
+    - name: sourceId
+      value: ""
+      type: query
+    - name: from
+      value: ""
+      type: query
+    - name: to
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

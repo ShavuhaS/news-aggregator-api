@@ -1,4 +1,4 @@
-name: dev
+name: dev admin
 variables:
   - name: baseUrl
     value: http://localhost:3000

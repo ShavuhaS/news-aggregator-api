@@ -1,0 +1,32 @@
+info:
+  name: Update source config
+  type: http
+  seq: 7
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/parser/sources/:id/config"
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "configuration": {
+          "mapping": {
+            "itemsSelector": ".news-item",
+            "titleSelector": "h2",
+            "linkSelector": "a",
+            "linkAttr": "href"
+          }
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
