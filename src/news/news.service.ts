@@ -444,17 +444,19 @@ export class NewsService {
       : Prisma.empty;
 
     const data = await this.prisma.$queryRaw<any[]>`
-      SELECT DISTINCT n.*, 
-             json_build_object('id', c.id, 'name', n_c.name) as category
+      SELECT n.*, 
+             json_build_object('id', c.id, 'name', c.name) as category
       FROM news n
-      JOIN news_categories n_c ON n.category_id = n_c.id
-      JOIN news_locations nl ON n.id = nl.news_id
-      JOIN locations l ON nl.location_id = l.id
       JOIN news_categories c ON n.category_id = c.id
-      WHERE ST_DWithin(
-        l.coords::geography, 
-        ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)::geography, 
-        ${dist} * 1000
+      WHERE n.id IN (
+        SELECT DISTINCT nl.news_id
+        FROM news_locations nl
+        JOIN locations l ON nl.location_id = l.id
+        WHERE ST_DWithin(
+          l.coords::geography, 
+          ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)::geography, 
+          ${dist} * 1000
+        )
       )
       ${searchFilter}
       ORDER BY n.published_at DESC
