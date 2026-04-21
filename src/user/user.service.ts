@@ -3,13 +3,15 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { User, Role } from '@prisma/client';
+import { User, Role, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { InternalCreateUser } from './interfaces/create-user.interface';
 import { UpdateUserData } from './interfaces/update-user.interface';
 import { UserWithRelations } from './interfaces/user-with-relations.interface';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -98,6 +100,31 @@ export class UserService {
         preferredCategories: { include: { category: true } },
         preferredLocations: { include: { location: true } },
       },
+    });
+  }
+
+  async changePassword(id: string, data: ChangePasswordDto): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (!user.password) {
+      throw new BadRequestException(
+        'User does not have a password set (OAuth account)',
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      data.oldPassword,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid current password');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword },
     });
   }
 

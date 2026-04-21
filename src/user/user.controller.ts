@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
 import { UserResponse } from './responses/user.response';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserMapper } from './user.mapper';
 
 @Controller('user/profile')
@@ -38,6 +39,12 @@ export class UserController {
   ): Promise<UserResponse> {
     const user = await this.userService.update(req.user.id, data);
     return this.userMapper.toResponse(user);
+  }
+
+  @Patch('password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(@Request() req, @Body() data: ChangePasswordDto) {
+    return this.userService.changePassword(req.user.id, data);
   }
 
   @Post('categories/:id')
