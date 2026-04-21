@@ -73,6 +73,23 @@ export class UserService {
   }
 
   async update(id: string, data: UpdateUserData): Promise<User> {
+    if (data.email || data.username) {
+      const existingUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [
+            ...(data.email ? [{ email: data.email }] : []),
+            ...(data.username ? [{ username: data.username }] : []),
+          ],
+          NOT: { id },
+        },
+      });
+
+      if (existingUser) {
+        const field = existingUser.email === data.email ? 'email' : 'username';
+        throw new ConflictException(`User with this ${field} already exists`);
+      }
+    }
+
     return this.prisma.user.update({
       where: { id },
       data,
