@@ -24,7 +24,6 @@ export class NewsResponse {
   categoryId: string;
   category?: NewsCategoryResponse;
   locations?: LocationResponse[];
-  complaintsCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

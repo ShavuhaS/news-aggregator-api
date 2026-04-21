@@ -4,8 +4,10 @@ import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ParserSourceResponse } from './interfaces/parser-source.interface';
 import { AdminParserClient } from './clients/admin-parser.client';
 import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
+import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import { NewsResponse } from './responses/news.response';
+import { ComplaintResponse } from './responses/complaint.response';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -206,16 +208,13 @@ export class NewsService {
     };
   }
 
-  async getNewsById(id: string): Promise<any> {
+  async getNewsById(id: string): Promise<NewsResponse | null> {
     const news = await this.prisma.news.findUnique({
       where: { id },
       include: {
         category: true,
         locations: {
           include: { location: true },
-        },
-        _count: {
-          select: { complaints: true },
         },
       },
     });
@@ -225,7 +224,28 @@ export class NewsService {
     return {
       ...news,
       locations: news.locations.map((loc) => loc.location),
-      complaintsCount: news._count.complaints,
+    } as NewsResponse;
+  }
+
+  async getNewsComplaints(newsId: string, query: ListComplaintsQueryDto): Promise<PaginatedResponse<ComplaintResponse>> {
+    const { page = 1, pageSize = 20 } = query;
+
+    const [data, totalCount] = await Promise.all([
+      this.prisma.complaint.findMany({
+        where: { newsId },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.complaint.count({ where: { newsId } }),
+    ]);
+
+    return {
+      data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      page,
+      pageSize,
     };
   }
 }

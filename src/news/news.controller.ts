@@ -3,6 +3,7 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ListNewsQueryDto } from './dto/list-news-query.dto';
+import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 
 @Controller('news')
 export class NewsController {
@@ -26,5 +27,9 @@ export class NewsController {
     }
     return news;
   }
-}
 
+  @Get(':id/complaints')
+  async getNewsComplaints(@Param('id') id: string, @Query() query: ListComplaintsQueryDto) {
+    return this.newsService.getNewsComplaints(id, query);
+  }
+}
