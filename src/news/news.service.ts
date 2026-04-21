@@ -1,10 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ParserSourceResponse } from './interfaces/parser-source.interface';
 import { AdminParserClient } from './clients/admin-parser.client';
 import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
+import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import { NewsResponse } from './responses/news.response';
 import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
@@ -137,19 +143,21 @@ export class NewsService {
     }
   }
 
-  async listNews(query: ListNewsQueryDto): Promise<PaginatedResponse<NewsResponse>> {
-    const { 
-      page = 1, 
-      pageSize = 20, 
-      categoryId, 
-      locationId, 
-      minSentiment, 
-      maxSentiment, 
-      from, 
-      to, 
+  async listNews(
+    query: ListNewsQueryDto,
+  ): Promise<PaginatedResponse<NewsResponse>> {
+    const {
+      page = 1,
+      pageSize = 20,
+      categoryId,
+      locationId,
+      minSentiment,
+      maxSentiment,
+      from,
+      to,
       search,
       sortBy = NewsSortField.PUBLISHED_AT,
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = query;
 
     const where: Prisma.NewsWhereInput = {};
@@ -228,7 +236,10 @@ export class NewsService {
     } as NewsResponse;
   }
 
-  async getNewsComplaints(newsId: string, query: ListComplaintsQueryDto): Promise<PaginatedResponse<ComplaintResponse>> {
+  async getNewsComplaints(
+    newsId: string,
+    query: ListComplaintsQueryDto,
+  ): Promise<PaginatedResponse<ComplaintResponse>> {
     const { page = 1, pageSize = 20 } = query;
 
     const [data, totalCount] = await Promise.all([
@@ -250,7 +261,9 @@ export class NewsService {
     };
   }
 
-  async listNewsWithComplaints(query: ListComplaintsQueryDto): Promise<PaginatedResponse<NewsWithComplaintsResponse>> {
+  async listNewsWithComplaints(
+    query: ListComplaintsQueryDto,
+  ): Promise<PaginatedResponse<NewsWithComplaintsResponse>> {
     const { page = 1, pageSize = 20 } = query;
 
     const [data, totalCount] = await Promise.all([
@@ -282,5 +295,32 @@ export class NewsService {
       page,
       pageSize,
     };
+  }
+
+  async updateNewsCategory(
+    newsId: string,
+    data: UpdateNewsCategoryDto,
+  ): Promise<NewsResponse> {
+    const news = await this.prisma.news.findUnique({ where: { id: newsId } });
+    if (!news) throw new NotFoundException('News not found');
+
+    const category = await this.prisma.newsCategory.findUnique({
+      where: { id: data.categoryId },
+    });
+    if (!category) throw new BadRequestException('Category does not exist');
+
+    const updatedNews = await this.prisma.news.update({
+      where: { id: newsId },
+      data: { categoryId: data.categoryId },
+      include: {
+        category: true,
+        locations: { include: { location: true } },
+      },
+    });
+
+    return {
+      ...updatedNews,
+      locations: updatedNews.locations.map((loc) => loc.location),
+    } as NewsResponse;
   }
 }

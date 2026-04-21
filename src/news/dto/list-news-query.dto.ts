@@ -1,4 +1,14 @@
-import { IsOptional, IsString, IsInt, Min, Max, IsNumber, IsDateString, IsUUID, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+  IsNumber,
+  IsDateString,
+  IsUUID,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum NewsSortField {

@@ -1,9 +1,23 @@
-import { Controller, Get, Query, Param, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Param,
+  NotFoundException,
+  Put,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ListNewsQueryDto } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
+import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('news')
 export class NewsController {
@@ -34,7 +48,20 @@ export class NewsController {
   }
 
   @Get(':id/complaints')
-  async getNewsComplaints(@Param('id') id: string, @Query() query: ListComplaintsQueryDto) {
+  async getNewsComplaints(
+    @Param('id') id: string,
+    @Query() query: ListComplaintsQueryDto,
+  ) {
     return this.newsService.getNewsComplaints(id, query);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Put(':newsId/category')
+  async updateNewsCategory(
+    @Param('newsId') newsId: string,
+    @Body() data: UpdateNewsCategoryDto,
+  ) {
+    return this.newsService.updateNewsCategory(newsId, data);
   }
 }
