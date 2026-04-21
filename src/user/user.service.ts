@@ -9,6 +9,7 @@ import { User, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { InternalCreateUser } from './interfaces/create-user.interface';
 import { UpdateUserData } from './interfaces/update-user.interface';
+import { UserWithRelations } from './interfaces/user-with-relations.interface';
 
 @Injectable()
 export class UserService {
@@ -30,7 +31,7 @@ export class UserService {
     });
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: string): Promise<UserWithRelations | null> {
     return this.prisma.user.findUnique({
       where: { id },
       include: {
@@ -72,7 +73,7 @@ export class UserService {
     });
   }
 
-  async update(id: string, data: UpdateUserData): Promise<User> {
+  async update(id: string, data: UpdateUserData): Promise<UserWithRelations> {
     if (data.email || data.username) {
       const existingUser = await this.prisma.user.findFirst({
         where: {
@@ -93,6 +94,10 @@ export class UserService {
     return this.prisma.user.update({
       where: { id },
       data,
+      include: {
+        preferredCategories: { include: { category: true } },
+        preferredLocations: { include: { location: true } },
+      },
     });
   }
 
