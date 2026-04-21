@@ -40,9 +40,7 @@ export async function fetchWrapper<T>(
           if (!formattedErrors[camelField]) {
             formattedErrors[camelField] = [];
           }
-          formattedErrors[camelField].push(
-            `Failed validation on the '${tag}' tag`,
-          );
+          formattedErrors[camelField].push(`Failed validation on the '${tag}' tag`);
         } else {
           if (!formattedErrors['_global']) formattedErrors['_global'] = [];
           formattedErrors['_global'].push(errStr);
@@ -58,7 +56,12 @@ export async function fetchWrapper<T>(
     );
   }
 
-  return response.json() as Promise<T>;
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  return text ? (JSON.parse(text) as T) : ({} as T);
 }
 
 const statusMap: Record<number, number> = {
