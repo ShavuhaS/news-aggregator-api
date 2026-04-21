@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
+import { ParserSourceResponse } from './interfaces/parser-source.interface';
 import { AdminParserClient } from './clients/admin-parser.client';
+import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
+import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
+import { NewsResponse } from './responses/news.response';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class NewsService {
@@ -127,5 +132,77 @@ export class NewsService {
       );
       return null;
     }
+  }
+
+  async listNews(query: ListNewsQueryDto): Promise<PaginatedResponse<NewsResponse>> {
+    const { 
+      page = 1, 
+      pageSize = 20, 
+      categoryId, 
+      locationId, 
+      minSentiment, 
+      maxSentiment, 
+      from, 
+      to, 
+      search,
+      sortBy = NewsSortField.PUBLISHED_AT,
+      sortOrder = 'desc'
+    } = query;
+
+    const where: Prisma.NewsWhereInput = {};
+
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
+    if (locationId) {
+      where.locations = {
+        some: {
+          locationId: locationId,
+        },
+      };
+    }
+
+    if (minSentiment !== undefined || maxSentiment !== undefined) {
+      where.sentimentScore = {
+        gte: minSentiment,
+        lte: maxSentiment,
+      };
+    }
+
+    if (from || to) {
+      where.publishedAt = {
+        gte: from ? new Date(from) : undefined,
+        lte: to ? new Date(to) : undefined,
+      };
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [data, totalCount] = await Promise.all([
+      this.prisma.news.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { [sortBy]: sortOrder },
+        include: {
+          category: true,
+        },
+      }),
+      this.prisma.news.count({ where }),
+    ]);
+
+    return {
+      data: data as NewsResponse[],
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      page,
+      pageSize,
+    };
   }
 }
