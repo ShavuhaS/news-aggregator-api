@@ -7,13 +7,18 @@ import {
   Put,
   Body,
   UseGuards,
+  Post,
+  Delete,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
-import type { AnalyzedNews } from './interfaces/analyzed-news.interface';
+import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ListNewsQueryDto } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
+import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -67,5 +72,27 @@ export class NewsController {
     @Body() data: UpdateNewsCategoryDto,
   ) {
     return this.newsService.updateNewsCategory(newsId, data);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post(':id/locations')
+  @HttpCode(HttpStatus.OK)
+  async addNewsLocation(
+    @Param('id') id: string,
+    @Body() data: UpdateNewsLocationDto,
+  ) {
+    return this.newsService.addNewsLocation(id, data.locationId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Delete(':id/locations/:locationId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeNewsLocation(
+    @Param('id') id: string,
+    @Param('locationId') locationId: string,
+  ) {
+    return this.newsService.removeNewsLocation(id, locationId);
   }
 }

@@ -1,4 +1,4 @@
-export interface AnalyzedLocation {
+export class AnalyzedLocation {
   original_text: string;
   lemma: string;
   formatted_address: string;
@@ -6,7 +6,7 @@ export interface AnalyzedLocation {
   lon: number;
 }
 
-export interface AnalyzedNews {
+export class AnalyzedNews {
   title: string;
   description: string;
   link: string;

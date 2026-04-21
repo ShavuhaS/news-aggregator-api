@@ -11,6 +11,7 @@ import { AdminParserClient } from './clients/admin-parser.client';
 import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
+import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import { NewsResponse } from './responses/news.response';
 import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
@@ -322,5 +323,31 @@ export class NewsService {
       ...updatedNews,
       locations: updatedNews.locations.map((loc) => loc.location),
     } as NewsResponse;
+  }
+
+  async addNewsLocation(newsId: string, locationId: string): Promise<void> {
+    const news = await this.prisma.news.findUnique({ where: { id: newsId } });
+    if (!news) throw new NotFoundException('News not found');
+
+    const location = await this.prisma.location.findUnique({
+      where: { id: locationId },
+    });
+    if (!location) throw new BadRequestException('Location does not exist');
+
+    await this.prisma.newsLocation.upsert({
+      where: { newsId_locationId: { newsId, locationId } },
+      create: { newsId, locationId },
+      update: {},
+    });
+  }
+
+  async removeNewsLocation(newsId: string, locationId: string): Promise<void> {
+    await this.prisma.newsLocation
+      .delete({
+        where: { newsId_locationId: { newsId, locationId } },
+      })
+      .catch(() => {
+        throw new NotFoundException('Location not associated with this news');
+      });
   }
 }

@@ -1,6 +1,6 @@
 import { ParserSourceType } from '../dto/parser-source.dto';
 
-export interface ParserSourceResponse {
+export class ParserSourceResponse {
   id: string;
   name: string;
   url: string;
