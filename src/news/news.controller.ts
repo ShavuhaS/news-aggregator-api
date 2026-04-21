@@ -96,6 +96,22 @@ export class NewsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @Post(':id/complaints/resolve')
+  @HttpCode(HttpStatus.OK)
+  async resolveNewsComplaints(@Param('id') id: string) {
+    return this.newsService.resolveNewsComplaints(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post(':id/complaints/reject')
+  @HttpCode(HttpStatus.OK)
+  async rejectNewsComplaints(@Param('id') id: string) {
+    return this.newsService.rejectNewsComplaints(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Put(':newsId/category')
   async updateNewsCategory(
     @Param('newsId') newsId: string,

@@ -10,12 +10,14 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserService } from './user.service';
 import { UserResponse } from './responses/user.response';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ListUserComplaintsQueryDto } from './dto/list-user-complaints-query.dto';
 import { UserMapper } from './user.mapper';
 
 @Controller('user/profile')
@@ -45,6 +47,14 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(@Request() req, @Body() data: ChangePasswordDto) {
     return this.userService.changePassword(req.user.id, data);
+  }
+
+  @Get('complaints')
+  async getUserComplaints(
+    @Request() req,
+    @Query() query: ListUserComplaintsQueryDto,
+  ) {
+    return this.userService.getUserComplaints(req.user.id, query);
   }
 
   @Post('categories/:id')

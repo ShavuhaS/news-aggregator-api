@@ -12,6 +12,9 @@ import { InternalCreateUser } from './interfaces/create-user.interface';
 import { UpdateUserData } from './interfaces/update-user.interface';
 import { UserWithRelations } from './interfaces/user-with-relations.interface';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ListUserComplaintsQueryDto } from './dto/list-user-complaints-query.dto';
+import { PaginatedResponse } from '../common/responses/paginated.response';
+import { ComplaintResponse } from '../news/responses/complaint.response';
 
 @Injectable()
 export class UserService {
@@ -176,5 +179,30 @@ export class UserService {
       .catch(() => {
         throw new NotFoundException('Location preference not found');
       });
+  }
+
+  async getUserComplaints(
+    userId: string,
+    query: ListUserComplaintsQueryDto,
+  ): Promise<PaginatedResponse<ComplaintResponse>> {
+    const { page = 1, pageSize = 20 } = query;
+
+    const [data, totalCount] = await Promise.all([
+      this.prisma.complaint.findMany({
+        where: { userId },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.complaint.count({ where: { userId } }),
+    ]);
+
+    return {
+      data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      page,
+      pageSize,
+    };
   }
 }

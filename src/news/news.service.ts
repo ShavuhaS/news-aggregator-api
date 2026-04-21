@@ -25,7 +25,7 @@ import {
 } from './responses/news.response';
 import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
 import { ComplaintResponse } from './responses/complaint.response';
-import { Prisma } from '@prisma/client';
+import { Prisma, ComplaintStatus } from '@prisma/client';
 
 @Injectable()
 export class NewsService {
@@ -58,9 +58,7 @@ export class NewsService {
       });
 
       if (existingNews) {
-        this.logger.log(
-          `News with link ${data.link} already exists. Skipping.`,
-        );
+        this.logger.log(`News with link ${data.link} already exists. Skipping.`);
         return existingNews;
       }
 
@@ -252,14 +250,16 @@ export class NewsService {
   ): Promise<PaginatedResponse<ComplaintResponse>> {
     const { page = 1, pageSize = 20 } = query;
 
+    const where = { newsId, status: ComplaintStatus.PENDING };
+
     const [data, totalCount] = await Promise.all([
       this.prisma.complaint.findMany({
-        where: { newsId },
+        where,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.complaint.count({ where: { newsId } }),
+      this.prisma.complaint.count({ where }),
     ]);
 
     return {
@@ -278,6 +278,11 @@ export class NewsService {
 
     const [data, totalCount] = await Promise.all([
       this.prisma.news.findMany({
+        where: {
+          complaints: {
+            some: { status: ComplaintStatus.PENDING },
+          },
+        },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: {
@@ -286,11 +291,21 @@ export class NewsService {
         include: {
           category: true,
           _count: {
-            select: { complaints: true },
+            select: { 
+              complaints: {
+                where: { status: ComplaintStatus.PENDING }
+              } 
+            },
           },
         },
       }),
-      this.prisma.news.count(),
+      this.prisma.news.count({
+        where: {
+          complaints: {
+            some: { status: ComplaintStatus.PENDING },
+          },
+        },
+      }),
     ]);
 
     const formattedData: NewsWithComplaintsResponse[] = data.map((item) => ({
@@ -372,13 +387,35 @@ export class NewsService {
       where: { newsId_userId: { newsId, userId } },
       update: {
         reason: data.reason,
-        status: 'PENDING',
       },
       create: {
         newsId,
         userId,
         reason: data.reason,
       },
+    });
+  }
+
+  async resolveNewsComplaints(newsId: string): Promise<void> {
+    const news = await this.prisma.news.findUnique({ where: { id: newsId } });
+    if (!news) throw new NotFoundException('News not found');
+
+    await this.prisma.$transaction([
+      this.prisma.complaint.updateMany({
+        where: { newsId, status: ComplaintStatus.PENDING },
+        data: { status: ComplaintStatus.RESOLVED },
+      }),
+      this.prisma.news.delete({ where: { id: newsId } }),
+    ]);
+  }
+
+  async rejectNewsComplaints(newsId: string): Promise<void> {
+    const news = await this.prisma.news.findUnique({ where: { id: newsId } });
+    if (!news) throw new NotFoundException('News not found');
+
+    await this.prisma.complaint.updateMany({
+      where: { newsId, status: ComplaintStatus.PENDING },
+      data: { status: ComplaintStatus.REJECTED },
     });
   }
 
