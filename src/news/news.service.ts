@@ -12,6 +12,7 @@ import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
 import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import { NewsResponse } from './responses/news.response';
 import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
@@ -349,5 +350,22 @@ export class NewsService {
       .catch(() => {
         throw new NotFoundException('Location not associated with this news');
       });
+  }
+
+  async createNewsComplaint(
+    newsId: string,
+    userId: string,
+    data: CreateComplaintDto,
+  ): Promise<ComplaintResponse> {
+    const news = await this.prisma.news.findUnique({ where: { id: newsId } });
+    if (!news) throw new NotFoundException('News not found');
+
+    return this.prisma.complaint.create({
+      data: {
+        newsId,
+        userId,
+        reason: data.reason,
+      },
+    });
   }
 }

@@ -11,6 +11,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Request,
 } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
@@ -19,6 +20,7 @@ import { ListNewsQueryDto } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
 import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -62,6 +64,16 @@ export class NewsController {
     @Query() query: ListComplaintsQueryDto,
   ) {
     return this.newsService.getNewsComplaints(id, query);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/complaints')
+  async createNewsComplaint(
+    @Param('id') id: string,
+    @Body() data: CreateComplaintDto,
+    @Request() req,
+  ) {
+    return this.newsService.createNewsComplaint(id, req.user.id, data);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
