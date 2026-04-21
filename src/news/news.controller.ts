@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
-import { AnalyzedNews } from './interfaces/analyzed-news.interface';
+import type { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ListNewsQueryDto } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
@@ -33,6 +33,8 @@ export class NewsController {
     return this.newsService.listNews(query);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Get('complaints')
   async listNewsWithComplaints(@Query() query: ListComplaintsQueryDto) {
     return this.newsService.listNewsWithComplaints(query);
@@ -47,6 +49,8 @@ export class NewsController {
     return news;
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Get(':id/complaints')
   async getNewsComplaints(
     @Param('id') id: string,
