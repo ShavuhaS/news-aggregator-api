@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -15,6 +17,10 @@ import { validationSchema } from '../config/validation';
       isGlobal: true,
       load: [configuration],
       validationSchema,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'static'),
+      serveRoot: '/static',
     }),
     PrismaModule,
     AuthModule,

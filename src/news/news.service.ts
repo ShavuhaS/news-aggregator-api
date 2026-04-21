@@ -40,12 +40,20 @@ export class NewsService {
         return existingNews;
       }
 
+      let publishedAt = new Date(data.published_at);
+      if (publishedAt.getUTCFullYear() <= 0) {
+        this.logger.warn(
+          `Invalid published_at year (0) for source ${data.source_id}. Setting to current year.`,
+        );
+        publishedAt.setUTCFullYear(new Date().getUTCFullYear());
+      }
+
       return await this.prisma.$transaction(async (tx) => {
         const locationIds: string[] = [];
 
         for (const loc of data.locations) {
-          const existingLocation = await tx.location.findFirst({
-            where: { lemma: loc.lemma },
+          const existingLocation = await tx.location.findUnique({
+            where: { address: loc.formatted_address },
           });
 
           let location;
@@ -53,7 +61,7 @@ export class NewsService {
             location = await tx.location.update({
               where: { id: existingLocation.id },
               data: {
-                address: loc.formatted_address,
+                lemma: loc.lemma,
                 originalText: loc.original_text,
                 lat: loc.lat,
                 lon: loc.lon,
@@ -62,8 +70,8 @@ export class NewsService {
           } else {
             location = await tx.location.create({
               data: {
-                lemma: loc.lemma,
                 address: loc.formatted_address,
+                lemma: loc.lemma,
                 originalText: loc.original_text,
                 lat: loc.lat,
                 lon: loc.lon,
@@ -86,12 +94,12 @@ export class NewsService {
             description: data.description,
             link: data.link,
             imageUrl,
-            publishedAt: new Date(data.published_at),
+            publishedAt,
             sentimentScore: data.sentiment_score,
             sourceId: data.source_id,
             categoryId: category.id,
             locations: {
-              create: locationIds.map((id) => ({
+              create: [...new Set(locationIds)].map((id) => ({
                 locationId: id,
               })),
             },
