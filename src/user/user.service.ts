@@ -205,4 +205,24 @@ export class UserService {
       pageSize,
     };
   }
+
+  async removeUserComplaint(userId: string, id: string): Promise<void> {
+    const complaint = await this.prisma.complaint.findUnique({
+      where: { id },
+    });
+
+    if (!complaint) {
+      throw new NotFoundException('Complaint not found');
+    }
+
+    if (complaint.userId !== userId) {
+      throw new UnauthorizedException(
+        'You can only delete your own complaints',
+      );
+    }
+
+    await this.prisma.complaint.delete({
+      where: { id },
+    });
+  }
 }

@@ -79,6 +79,17 @@ export class UserController {
     return this.userMapper.toPaginatedComplaintResponse(result);
   }
 
+  @Delete('complaints/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a user complaint' })
+  @ApiResponse({ status: 204 })
+  async removeUserComplaint(
+    @Request() req,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.userService.removeUserComplaint(req.user.id, id);
+  }
+
   @Post('categories/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Add a preferred category' })
