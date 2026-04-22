@@ -62,7 +62,9 @@ export class NewsService {
       });
 
       if (existingNews) {
-        this.logger.log(`News with link ${data.link} already exists. Skipping.`);
+        this.logger.log(
+          `News with link ${data.link} already exists. Skipping.`,
+        );
         return existingNews;
       }
 

@@ -34,7 +34,15 @@ import {
   ParserSourceSummaryResponse,
   ParserParsingErrorResponse,
 } from './responses/parser-service.response';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
+@ApiTags('parser')
+@ApiBearerAuth()
 @Controller('parser')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
@@ -52,6 +60,11 @@ export class ParserController {
   }
 
   @Get('sources')
+  @ApiOperation({ summary: 'List all parser sources (Admin)' })
+  @ApiResponse({
+    status: 200,
+    type: PaginatedResponse<ParserSourceSummaryResponse>,
+  })
   async listSources(
     @Query() query: ListSourcesQueryDto,
     @Request() req,
@@ -64,6 +77,11 @@ export class ParserController {
   }
 
   @Get('sources/errors')
+  @ApiOperation({ summary: 'List parser errors (Admin)' })
+  @ApiResponse({
+    status: 200,
+    type: PaginatedResponse<ParserParsingErrorResponse>,
+  })
   async listParsingErrors(
     @Query() query: ListParsingErrorsQueryDto,
     @Request() req,
@@ -76,6 +94,8 @@ export class ParserController {
   }
 
   @Post('sources')
+  @ApiOperation({ summary: 'Create a new parser source (Admin)' })
+  @ApiResponse({ status: 201, type: ParserSourceResponse })
   async createSource(
     @Body() data: CreateSourceDto,
     @Request() req,
@@ -88,6 +108,8 @@ export class ParserController {
   }
 
   @Get('sources/:id')
+  @ApiOperation({ summary: 'Get parser source by ID (Admin)' })
+  @ApiResponse({ status: 200, type: ParserSourceResponse })
   async getSourceById(
     @Param('id') id: string,
     @Request() req,
@@ -100,6 +122,8 @@ export class ParserController {
   }
 
   @Patch('sources/:id')
+  @ApiOperation({ summary: 'Update basic source info (Admin)' })
+  @ApiResponse({ status: 200, type: ParserSourceResponse })
   async updateSourceBasic(
     @Param('id') id: string,
     @Body() data: UpdateSourceBasicDto,
@@ -114,6 +138,8 @@ export class ParserController {
   }
 
   @Put('sources/:id/status')
+  @ApiOperation({ summary: 'Update source active status (Admin)' })
+  @ApiResponse({ status: 200, type: ParserSourceResponse })
   async updateSourceStatus(
     @Param('id') id: string,
     @Body() data: UpdateSourceStatusDto,
@@ -128,6 +154,8 @@ export class ParserController {
   }
 
   @Put('sources/:id/config')
+  @ApiOperation({ summary: 'Update source configuration (Admin)' })
+  @ApiResponse({ status: 200, type: ParserSourceResponse })
   async updateSourceConfig(
     @Param('id') id: string,
     @Body() data: UpdateSourceConfigDto,
@@ -142,6 +170,8 @@ export class ParserController {
   }
 
   @Post('sources/:id/parse')
+  @ApiOperation({ summary: 'Manually trigger source parsing (Admin)' })
+  @ApiResponse({ status: 200 })
   async triggerSourceParse(
     @Param('id') id: string,
     @Request() req,
@@ -150,6 +180,8 @@ export class ParserController {
   }
 
   @Delete('sources/:id')
+  @ApiOperation({ summary: 'Delete a parser source (Admin)' })
+  @ApiResponse({ status: 200 })
   async deleteSource(@Param('id') id: string, @Request() req): Promise<void> {
     return this.parserClient.deleteSource(id, this.getToken(req));
   }

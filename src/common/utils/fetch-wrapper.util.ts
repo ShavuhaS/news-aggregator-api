@@ -40,7 +40,9 @@ export async function fetchWrapper<T>(
           if (!formattedErrors[camelField]) {
             formattedErrors[camelField] = [];
           }
-          formattedErrors[camelField].push(`Failed validation on the '${tag}' tag`);
+          formattedErrors[camelField].push(
+            `Failed validation on the '${tag}' tag`,
+          );
         } else {
           if (!formattedErrors['_global']) formattedErrors['_global'] = [];
           formattedErrors['_global'].push(errStr);

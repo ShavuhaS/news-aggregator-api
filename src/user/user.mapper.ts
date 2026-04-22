@@ -34,7 +34,9 @@ export class UserMapper {
     paginated: PaginatedResponse<Complaint>,
   ): PaginatedResponse<ComplaintResponse> {
     const response = new PaginatedResponse<ComplaintResponse>();
-    response.data = paginated.data.map((item) => this.toComplaintResponse(item));
+    response.data = paginated.data.map((item) =>
+      this.toComplaintResponse(item),
+    );
     response.totalCount = paginated.totalCount;
     response.totalPages = paginated.totalPages;
     response.page = paginated.page;

@@ -21,7 +21,15 @@ import { ListUserComplaintsQueryDto } from './dto/list-user-complaints-query.dto
 import { UserMapper } from './user.mapper';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import { ComplaintResponse } from '../news/responses/complaint.response';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
+@ApiTags('user/profile')
+@ApiBearerAuth()
 @Controller('user/profile')
 @UseGuards(JwtAuthGuard)
 export class UserController {
@@ -31,12 +39,16 @@ export class UserController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, type: UserResponse })
   async getProfile(@Request() req): Promise<UserResponse> {
     const user = await this.userService.findById(req.user.id);
     return this.userMapper.toResponse(user!);
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Update user profile info' })
+  @ApiResponse({ status: 200, type: UserResponse })
   async updateProfile(
     @Request() req,
     @Body() data: UpdateProfileDto,
@@ -47,6 +59,8 @@ export class UserController {
 
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiResponse({ status: 204 })
   async changePassword(
     @Request() req,
     @Body() data: ChangePasswordDto,
@@ -55,6 +69,8 @@ export class UserController {
   }
 
   @Get('complaints')
+  @ApiOperation({ summary: 'List current user complaints' })
+  @ApiResponse({ status: 200, type: PaginatedResponse<ComplaintResponse> })
   async getUserComplaints(
     @Request() req,
     @Query() query: ListUserComplaintsQueryDto,
@@ -65,6 +81,8 @@ export class UserController {
 
   @Post('categories/:id')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Add a preferred category' })
+  @ApiResponse({ status: 200 })
   async addCategory(
     @Request() req,
     @Param('id') categoryId: string,
@@ -74,6 +92,8 @@ export class UserController {
 
   @Delete('categories/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a preferred category' })
+  @ApiResponse({ status: 204 })
   async removeCategory(
     @Request() req,
     @Param('id') categoryId: string,
@@ -83,6 +103,8 @@ export class UserController {
 
   @Post('locations/:id')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Add a preferred location' })
+  @ApiResponse({ status: 200 })
   async addLocation(
     @Request() req,
     @Param('id') locationId: string,
@@ -92,6 +114,8 @@ export class UserController {
 
   @Delete('locations/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a preferred location' })
+  @ApiResponse({ status: 204 })
   async removeLocation(
     @Request() req,
     @Param('id') locationId: string,

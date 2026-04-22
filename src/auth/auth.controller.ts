@@ -19,7 +19,15 @@ import { AuthMapper } from './auth.mapper';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from './constants';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   private env: string;
@@ -50,6 +58,8 @@ export class AuthController {
   }
 
   @Post('register')
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, type: TokensResponse })
   async register(
     @Body() registerDto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -61,6 +71,8 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @ApiOperation({ summary: 'Login with username or email' })
+  @ApiResponse({ status: 200, type: TokensResponse })
   async login(
     @Request() req,
     @Res({ passthrough: true }) res: Response,
@@ -71,7 +83,10 @@ export class AuthController {
   }
 
   @UseGuards(RefreshAuthGuard)
+  @ApiCookieAuth('refreshToken')
   @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ status: 200, type: TokensResponse })
   async refresh(
     @Request() req,
     @Res({ passthrough: true }) res: Response,
@@ -82,10 +97,12 @@ export class AuthController {
   }
 
   @Get('google')
+  @ApiOperation({ summary: 'Initiate Google OAuth2 flow' })
   @UseGuards(GoogleAuthGuard)
   async googleAuth(@Req() req) {}
 
   @Get('google/callback')
+  @ApiOperation({ summary: 'Google OAuth2 callback' })
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const tokens = await this.authService.googleLogin(req.user);
