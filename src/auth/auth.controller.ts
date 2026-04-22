@@ -96,6 +96,14 @@ export class AuthController {
     return this.authMapper.toTokensResponse(tokens);
   }
 
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout and clear cookies' })
+  @ApiResponse({ status: 204 })
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie(ACCESS_TOKEN_COOKIE);
+    res.clearCookie(REFRESH_TOKEN_COOKIE, { path: '/auth/refresh' });
+  }
+
   @Get('google')
   @ApiOperation({ summary: 'Initiate Google OAuth2 flow' })
   @UseGuards(GoogleAuthGuard)

@@ -18,6 +18,9 @@ export class UserResponse {
   @ApiPropertyOptional({ type: String, nullable: true })
   googleId: string | null;
 
+  @ApiProperty()
+  hasPassword: boolean;
+
   @ApiProperty({ enum: Role })
   role: Role;
 

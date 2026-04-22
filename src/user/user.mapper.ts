@@ -12,6 +12,7 @@ export class UserMapper {
 
     const response = new UserResponse();
     Object.assign(response, rest);
+    response.hasPassword = !!password;
     response.preferredCategories = preferredCategories.map((pc) => pc.category);
     response.preferredLocations = preferredLocations.map((pl) => pl.location);
 
