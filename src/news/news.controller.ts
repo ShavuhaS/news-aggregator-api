@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { NewsService } from './news.service';
+import { NewsMapper } from './news.mapper';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
 import { ListNewsQueryDto } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
@@ -28,10 +29,21 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { PaginatedResponse } from '../common/responses/paginated.response';
+import {
+  NewsResponse,
+  NewsCategoryResponse,
+  LocationResponse,
+} from './responses/news.response';
+import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
+import { ComplaintResponse } from './responses/complaint.response';
 
 @Controller('news')
 export class NewsController {
-  constructor(private readonly newsService: NewsService) {}
+  constructor(
+    private readonly newsService: NewsService,
+    private readonly newsMapper: NewsMapper,
+  ) {}
 
   @EventPattern('news-analyzed')
   async handleAnalyzedNews(@Payload() data: AnalyzedNews) {
@@ -39,39 +51,54 @@ export class NewsController {
   }
 
   @Get()
-  async listNews(@Query() query: ListNewsQueryDto) {
-    return this.newsService.listNews(query);
+  async listNews(
+    @Query() query: ListNewsQueryDto,
+  ): Promise<PaginatedResponse<NewsResponse>> {
+    const result = await this.newsService.listNews(query);
+    return this.newsMapper.toPaginatedNewsResponse(result);
   }
 
   @Get('categories')
-  async listCategories(@Query() query: ListCategoriesQueryDto) {
-    return this.newsService.listCategories(query);
+  async listCategories(
+    @Query() query: ListCategoriesQueryDto,
+  ): Promise<PaginatedResponse<NewsCategoryResponse>> {
+    const result = await this.newsService.listCategories(query);
+    return this.newsMapper.toPaginatedCategoryResponse(result);
   }
 
   @Get('nearby')
-  async listNearbyNews(@Query() query: ListNearbyNewsQueryDto) {
-    return this.newsService.listNearbyNews(query);
+  async listNearbyNews(
+    @Query() query: ListNearbyNewsQueryDto,
+  ): Promise<PaginatedResponse<NewsResponse>> {
+    const result = await this.newsService.listNearbyNews(query);
+    return this.newsMapper.toPaginatedNewsResponse(result);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('complaints')
-  async listNewsWithComplaints(@Query() query: ListComplaintsQueryDto) {
-    return this.newsService.listNewsWithComplaints(query);
+  async listNewsWithComplaints(
+    @Query() query: ListComplaintsQueryDto,
+  ): Promise<PaginatedResponse<NewsWithComplaintsResponse>> {
+    const result = await this.newsService.listNewsWithComplaints(query);
+    return this.newsMapper.toPaginatedNewsWithComplaintsResponse(result);
   }
 
   @Get('locations')
-  async listLocations(@Query() query: ListLocationsQueryDto) {
-    return this.newsService.listLocations(query);
+  async listLocations(
+    @Query() query: ListLocationsQueryDto,
+  ): Promise<PaginatedResponse<LocationResponse>> {
+    const result = await this.newsService.listLocations(query);
+    return this.newsMapper.toPaginatedLocationResponse(result);
   }
 
   @Get(':id')
-  async getNewsById(@Param('id') id: string) {
+  async getNewsById(@Param('id') id: string): Promise<NewsResponse> {
     const news = await this.newsService.getNewsById(id);
     if (!news) {
       throw new NotFoundException('News not found');
     }
-    return news;
+    return this.newsMapper.toNewsResponse(news);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -80,8 +107,9 @@ export class NewsController {
   async getNewsComplaints(
     @Param('id') id: string,
     @Query() query: ListComplaintsQueryDto,
-  ) {
-    return this.newsService.getNewsComplaints(id, query);
+  ): Promise<PaginatedResponse<ComplaintResponse>> {
+    const result = await this.newsService.getNewsComplaints(id, query);
+    return this.newsMapper.toPaginatedComplaintResponse(result);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -90,15 +118,20 @@ export class NewsController {
     @Param('id') id: string,
     @Body() data: CreateComplaintDto,
     @Request() req,
-  ) {
-    return this.newsService.createNewsComplaint(id, req.user.id, data);
+  ): Promise<ComplaintResponse> {
+    const complaint = await this.newsService.createNewsComplaint(
+      id,
+      req.user.id,
+      data,
+    );
+    return this.newsMapper.toComplaintResponse(complaint);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post(':id/complaints/resolve')
   @HttpCode(HttpStatus.OK)
-  async resolveNewsComplaints(@Param('id') id: string) {
+  async resolveNewsComplaints(@Param('id') id: string): Promise<void> {
     return this.newsService.resolveNewsComplaints(id);
   }
 
@@ -106,7 +139,7 @@ export class NewsController {
   @Roles(Role.ADMIN)
   @Post(':id/complaints/reject')
   @HttpCode(HttpStatus.OK)
-  async rejectNewsComplaints(@Param('id') id: string) {
+  async rejectNewsComplaints(@Param('id') id: string): Promise<void> {
     return this.newsService.rejectNewsComplaints(id);
   }
 
@@ -116,8 +149,9 @@ export class NewsController {
   async updateNewsCategory(
     @Param('newsId') newsId: string,
     @Body() data: UpdateNewsCategoryDto,
-  ) {
-    return this.newsService.updateNewsCategory(newsId, data);
+  ): Promise<NewsResponse> {
+    const news = await this.newsService.updateNewsCategory(newsId, data);
+    return this.newsMapper.toNewsResponse(news);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -127,7 +161,7 @@ export class NewsController {
   async addNewsLocation(
     @Param('id') id: string,
     @Body() data: UpdateNewsLocationDto,
-  ) {
+  ): Promise<void> {
     return this.newsService.addNewsLocation(id, data.locationId);
   }
 
@@ -138,7 +172,7 @@ export class NewsController {
   async removeNewsLocation(
     @Param('id') id: string,
     @Param('locationId') locationId: string,
-  ) {
+  ): Promise<void> {
     return this.newsService.removeNewsLocation(id, locationId);
   }
 }

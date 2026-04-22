@@ -19,6 +19,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ListUserComplaintsQueryDto } from './dto/list-user-complaints-query.dto';
 import { UserMapper } from './user.mapper';
+import { PaginatedResponse } from '../common/responses/paginated.response';
+import { ComplaintResponse } from '../news/responses/complaint.response';
 
 @Controller('user/profile')
 @UseGuards(JwtAuthGuard)
@@ -45,7 +47,10 @@ export class UserController {
 
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async changePassword(@Request() req, @Body() data: ChangePasswordDto) {
+  async changePassword(
+    @Request() req,
+    @Body() data: ChangePasswordDto,
+  ): Promise<void> {
     return this.userService.changePassword(req.user.id, data);
   }
 
@@ -53,31 +58,44 @@ export class UserController {
   async getUserComplaints(
     @Request() req,
     @Query() query: ListUserComplaintsQueryDto,
-  ) {
-    return this.userService.getUserComplaints(req.user.id, query);
+  ): Promise<PaginatedResponse<ComplaintResponse>> {
+    const result = await this.userService.getUserComplaints(req.user.id, query);
+    return this.userMapper.toPaginatedComplaintResponse(result);
   }
 
   @Post('categories/:id')
   @HttpCode(HttpStatus.OK)
-  async addCategory(@Request() req, @Param('id') categoryId: string) {
-    return this.userService.addCategory(req.user.id, categoryId);
+  async addCategory(
+    @Request() req,
+    @Param('id') categoryId: string,
+  ): Promise<void> {
+    await this.userService.addCategory(req.user.id, categoryId);
   }
 
   @Delete('categories/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeCategory(@Request() req, @Param('id') categoryId: string) {
-    return this.userService.removeCategory(req.user.id, categoryId);
+  async removeCategory(
+    @Request() req,
+    @Param('id') categoryId: string,
+  ): Promise<void> {
+    await this.userService.removeCategory(req.user.id, categoryId);
   }
 
   @Post('locations/:id')
   @HttpCode(HttpStatus.OK)
-  async addLocation(@Request() req, @Param('id') locationId: string) {
-    return this.userService.addLocation(req.user.id, locationId);
+  async addLocation(
+    @Request() req,
+    @Param('id') locationId: string,
+  ): Promise<void> {
+    await this.userService.addLocation(req.user.id, locationId);
   }
 
   @Delete('locations/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeLocation(@Request() req, @Param('id') locationId: string) {
-    return this.userService.removeLocation(req.user.id, locationId);
+  async removeLocation(
+    @Request() req,
+    @Param('id') locationId: string,
+  ): Promise<void> {
+    await this.userService.removeLocation(req.user.id, locationId);
   }
 }

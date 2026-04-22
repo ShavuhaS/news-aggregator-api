@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwksController } from './jwks.controller';
 import { JwksService } from './jwks.service';
+import { AuthMapper } from './auth.mapper';
 import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
@@ -16,12 +17,13 @@ import { PassportModule } from '@nestjs/passport';
   providers: [
     AuthService,
     JwksService,
+    AuthMapper,
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
     RefreshJwtStrategy,
   ],
   controllers: [AuthController, JwksController],
-  exports: [AuthService, JwksService],
+  exports: [AuthService, JwksService, AuthMapper],
 })
 export class AuthModule {}

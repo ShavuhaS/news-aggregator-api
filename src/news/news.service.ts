@@ -19,13 +19,17 @@ import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
 import { ListNearbyNewsQueryDto } from './dto/list-nearby-news-query.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import {
-  NewsResponse,
-  NewsCategoryResponse,
-  LocationResponse,
-} from './responses/news.response';
-import { NewsWithComplaintsResponse } from './responses/news-with-complaints.response';
-import { ComplaintResponse } from './responses/complaint.response';
-import { Prisma, ComplaintStatus } from '@prisma/client';
+  NewsWithRelations,
+  NewsWithComplaintsCount,
+} from './interfaces/news-with-relations.interface';
+import {
+  Prisma,
+  ComplaintStatus,
+  News,
+  NewsCategory,
+  Location,
+  Complaint,
+} from '@prisma/client';
 
 @Injectable()
 export class NewsService {
@@ -153,7 +157,7 @@ export class NewsService {
 
   async listNews(
     query: ListNewsQueryDto,
-  ): Promise<PaginatedResponse<NewsResponse>> {
+  ): Promise<PaginatedResponse<NewsWithRelations>> {
     const {
       page = 1,
       pageSize = 20,
@@ -211,13 +215,14 @@ export class NewsService {
         orderBy: { [sortBy]: sortOrder },
         include: {
           category: true,
+          locations: { include: { location: true } },
         },
       }),
       this.prisma.news.count({ where }),
     ]);
 
     return {
-      data: data as NewsResponse[],
+      data,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       page,
@@ -225,8 +230,8 @@ export class NewsService {
     };
   }
 
-  async getNewsById(id: string): Promise<NewsResponse | null> {
-    const news = await this.prisma.news.findUnique({
+  async getNewsById(id: string): Promise<NewsWithRelations | null> {
+    return this.prisma.news.findUnique({
       where: { id },
       include: {
         category: true,
@@ -235,19 +240,12 @@ export class NewsService {
         },
       },
     });
-
-    if (!news) return null;
-
-    return {
-      ...news,
-      locations: news.locations.map((loc) => loc.location),
-    } as NewsResponse;
   }
 
   async getNewsComplaints(
     newsId: string,
     query: ListComplaintsQueryDto,
-  ): Promise<PaginatedResponse<ComplaintResponse>> {
+  ): Promise<PaginatedResponse<Complaint>> {
     const { page = 1, pageSize = 20 } = query;
 
     const where = { newsId, status: ComplaintStatus.PENDING };
@@ -273,7 +271,7 @@ export class NewsService {
 
   async listNewsWithComplaints(
     query: ListComplaintsQueryDto,
-  ): Promise<PaginatedResponse<NewsWithComplaintsResponse>> {
+  ): Promise<PaginatedResponse<NewsWithComplaintsCount>> {
     const { page = 1, pageSize = 20 } = query;
 
     const [data, totalCount] = await Promise.all([
@@ -291,10 +289,10 @@ export class NewsService {
         include: {
           category: true,
           _count: {
-            select: { 
+            select: {
               complaints: {
-                where: { status: ComplaintStatus.PENDING }
-              } 
+                where: { status: ComplaintStatus.PENDING },
+              },
             },
           },
         },
@@ -308,13 +306,8 @@ export class NewsService {
       }),
     ]);
 
-    const formattedData: NewsWithComplaintsResponse[] = data.map((item) => ({
-      ...item,
-      complaintsCount: item._count.complaints,
-    })) as NewsWithComplaintsResponse[];
-
     return {
-      data: formattedData,
+      data,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       page,
@@ -325,7 +318,7 @@ export class NewsService {
   async updateNewsCategory(
     newsId: string,
     data: UpdateNewsCategoryDto,
-  ): Promise<NewsResponse> {
+  ): Promise<NewsWithRelations> {
     const news = await this.prisma.news.findUnique({ where: { id: newsId } });
     if (!news) throw new NotFoundException('News not found');
 
@@ -334,7 +327,7 @@ export class NewsService {
     });
     if (!category) throw new BadRequestException('Category does not exist');
 
-    const updatedNews = await this.prisma.news.update({
+    return this.prisma.news.update({
       where: { id: newsId },
       data: { categoryId: data.categoryId },
       include: {
@@ -342,11 +335,6 @@ export class NewsService {
         locations: { include: { location: true } },
       },
     });
-
-    return {
-      ...updatedNews,
-      locations: updatedNews.locations.map((loc) => loc.location),
-    } as NewsResponse;
   }
 
   async addNewsLocation(newsId: string, locationId: string): Promise<void> {
@@ -379,7 +367,7 @@ export class NewsService {
     newsId: string,
     userId: string,
     data: CreateComplaintDto,
-  ): Promise<ComplaintResponse> {
+  ): Promise<Complaint> {
     const news = await this.prisma.news.findUnique({ where: { id: newsId } });
     if (!news) throw new NotFoundException('News not found');
 
@@ -421,7 +409,7 @@ export class NewsService {
 
   async listLocations(
     query: ListLocationsQueryDto,
-  ): Promise<PaginatedResponse<LocationResponse>> {
+  ): Promise<PaginatedResponse<Location>> {
     const { page = 1, pageSize = 20, search } = query;
 
     const where: Prisma.LocationWhereInput = search
@@ -449,7 +437,7 @@ export class NewsService {
 
   async listCategories(
     query: ListCategoriesQueryDto,
-  ): Promise<PaginatedResponse<NewsCategoryResponse>> {
+  ): Promise<PaginatedResponse<NewsCategory>> {
     const { page = 1, pageSize = 20, search } = query;
 
     const where: Prisma.NewsCategoryWhereInput = search
@@ -477,7 +465,7 @@ export class NewsService {
 
   async listNearbyNews(
     query: ListNearbyNewsQueryDto,
-  ): Promise<PaginatedResponse<NewsResponse>> {
+  ): Promise<PaginatedResponse<NewsWithRelations>> {
     const { lat, lon, dist, page = 1, pageSize = 20, search } = query;
     const offset = (page - 1) * pageSize;
 
@@ -487,20 +475,38 @@ export class NewsService {
 
     const data = await this.prisma.$queryRaw<any[]>`
       SELECT n.*, 
-             json_build_object('id', c.id, 'name', c.name) as category
+             json_build_object('id', c.id, 'name', c.name) as category,
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'location', json_build_object(
+                     'id', l.id, 
+                     'address', l.address, 
+                     'lemma', l.lemma, 
+                     'originalText', l.original_text, 
+                     'lat', l.lat, 
+                     'lon', l.lon
+                   )
+                 )
+               ) FILTER (WHERE l.id IS NOT NULL), 
+               '[]'
+             ) as locations
       FROM news n
       JOIN news_categories c ON n.category_id = c.id
+      LEFT JOIN news_locations nl ON n.id = nl.news_id
+      LEFT JOIN locations l ON nl.location_id = l.id
       WHERE n.id IN (
-        SELECT DISTINCT nl.news_id
-        FROM news_locations nl
-        JOIN locations l ON nl.location_id = l.id
+        SELECT DISTINCT nl_inner.news_id
+        FROM news_locations nl_inner
+        JOIN locations l_inner ON nl_inner.location_id = l_inner.id
         WHERE ST_DWithin(
-          l.coords::geography, 
+          l_inner.coords::geography, 
           ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)::geography, 
           ${dist} * 1000
         )
       )
       ${searchFilter}
+      GROUP BY n.id, c.id
       ORDER BY n.published_at DESC
       LIMIT ${pageSize} OFFSET ${offset}
     `;
@@ -520,16 +526,18 @@ export class NewsService {
 
     const totalCount = Number(totalCountResult[0].count);
 
+    const formattedData = data.map((item) => ({
+      ...item,
+      publishedAt: item.published_at,
+      sentimentScore: item.sentiment_score,
+      sourceId: item.source_id,
+      categoryId: item.category_id,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at,
+    })) as NewsWithRelations[];
+
     return {
-      data: data.map((item) => ({
-        ...item,
-        publishedAt: item.published_at,
-        sentimentScore: item.sentiment_score,
-        sourceId: item.source_id,
-        categoryId: item.category_id,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-      })) as NewsResponse[],
+      data: formattedData,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
       page,
