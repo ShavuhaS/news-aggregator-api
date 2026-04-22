@@ -244,6 +244,14 @@ export class NewsService {
     });
   }
 
+  async getCategoryById(id: string): Promise<NewsCategory | null> {
+    return this.prisma.newsCategory.findUnique({ where: { id } });
+  }
+
+  async getLocationById(id: string): Promise<Location | null> {
+    return this.prisma.location.findUnique({ where: { id } });
+  }
+
   async getNewsComplaints(
     newsId: string,
     query: ListComplaintsQueryDto,

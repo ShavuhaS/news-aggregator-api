@@ -114,6 +114,24 @@ export class NewsController {
     return this.newsMapper.toPaginatedLocationResponse(result);
   }
 
+  @Get('categories/:id')
+  @ApiOperation({ summary: 'Get category by ID' })
+  @ApiResponse({ status: 200, type: NewsCategoryResponse })
+  async getCategoryById(@Param('id') id: string): Promise<NewsCategoryResponse> {
+    const category = await this.newsService.getCategoryById(id);
+    if (!category) throw new NotFoundException('Category not found');
+    return this.newsMapper.toCategoryResponse(category);
+  }
+
+  @Get('locations/:id')
+  @ApiOperation({ summary: 'Get location by ID' })
+  @ApiResponse({ status: 200, type: LocationResponse })
+  async getLocationById(@Param('id') id: string): Promise<LocationResponse> {
+    const location = await this.newsService.getLocationById(id);
+    if (!location) throw new NotFoundException('Location not found');
+    return this.newsMapper.toLocationResponse(location);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get news by ID' })
   @ApiResponse({ status: 200, type: NewsResponse })
