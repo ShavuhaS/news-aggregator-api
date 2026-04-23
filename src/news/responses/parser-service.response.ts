@@ -82,6 +82,9 @@ export class ParserParsingErrorResponse {
   sourceId: string;
 
   @ApiPropertyOptional({ type: String, nullable: true })
+  sourceName: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true })
   errorMessage: string | null;
 
   @ApiPropertyOptional({ type: String, nullable: true })
