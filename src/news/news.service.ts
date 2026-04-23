@@ -4,19 +4,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { AnalyzedNews } from './interfaces/analyzed-news.interface';
-import { ParserSourceResponse } from './interfaces/parser-source.interface';
 import { AdminParserClient } from './clients/admin-parser.client';
 import { ListNewsQueryDto, NewsSortField } from './dto/list-news-query.dto';
 import { ListComplaintsQueryDto } from './dto/list-complaints-query.dto';
 import { UpdateNewsCategoryDto } from './dto/update-news-category.dto';
-import { UpdateNewsLocationDto } from './dto/update-news-location.dto';
-import { CreateComplaintDto } from './dto/create-complaint.dto';
-import { ListLocationsQueryDto } from './dto/list-locations-query.dto';
-import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
-import { ListNearbyNewsQueryDto } from './dto/list-nearby-news-query.dto';
 import { PaginatedResponse } from '../common/responses/paginated.response';
 import {
   NewsWithRelations,
@@ -25,11 +18,15 @@ import {
 import {
   Prisma,
   ComplaintStatus,
-  News,
   NewsCategory,
   Location,
   Complaint,
 } from '@prisma/client';
+import { ListLocationsQueryDto } from './dto/list-locations-query.dto';
+import { ListCategoriesQueryDto } from './dto/list-categories-query.dto';
+import { ListNearbyNewsQueryDto } from './dto/list-nearby-news-query.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class NewsService {
@@ -203,10 +200,15 @@ export class NewsService {
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
+      const words = search.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        where.AND = words.map((word) => ({
+          OR: [
+            { title: { contains: word, mode: 'insensitive' } },
+            { description: { contains: word, mode: 'insensitive' } },
+          ],
+        }));
+      }
     }
 
     const [data, totalCount] = await Promise.all([
@@ -422,9 +424,15 @@ export class NewsService {
   ): Promise<PaginatedResponse<Location>> {
     const { page = 1, pageSize = 20, search } = query;
 
-    const where: Prisma.LocationWhereInput = search
-      ? { address: { contains: search, mode: 'insensitive' } }
-      : {};
+    const where: Prisma.LocationWhereInput = {};
+    if (search) {
+      const words = search.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        where.AND = words.map((word) => ({
+          address: { contains: word, mode: 'insensitive' },
+        }));
+      }
+    }
 
     const [data, totalCount] = await Promise.all([
       this.prisma.location.findMany({
@@ -450,9 +458,15 @@ export class NewsService {
   ): Promise<PaginatedResponse<NewsCategory>> {
     const { page = 1, pageSize = 20, search } = query;
 
-    const where: Prisma.NewsCategoryWhereInput = search
-      ? { name: { contains: search, mode: 'insensitive' } }
-      : {};
+    const where: Prisma.NewsCategoryWhereInput = {};
+    if (search) {
+      const words = search.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        where.AND = words.map((word) => ({
+          name: { contains: word, mode: 'insensitive' },
+        }));
+      }
+    }
 
     const [data, totalCount] = await Promise.all([
       this.prisma.newsCategory.findMany({
@@ -479,9 +493,17 @@ export class NewsService {
     const { lat, lon, dist, page = 1, pageSize = 20, search } = query;
     const offset = (page - 1) * pageSize;
 
-    const searchFilter = search
-      ? Prisma.sql`AND (n.title ILIKE ${'%' + search + '%'} OR n.description ILIKE ${'%' + search + '%'})`
-      : Prisma.empty;
+    let searchFilter = Prisma.empty;
+    if (search) {
+      const words = search.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        const conditions = words.map(
+          (word) =>
+            Prisma.sql`(n.title ILIKE ${'%' + word + '%'} OR n.description ILIKE ${'%' + word + '%'})`,
+        );
+        searchFilter = Prisma.sql`AND ${Prisma.join(conditions, ' AND ')}`;
+      }
+    }
 
     const data = await this.prisma.$queryRaw<any[]>`
       SELECT n.*, 

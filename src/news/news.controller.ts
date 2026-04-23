@@ -117,7 +117,9 @@ export class NewsController {
   @Get('categories/:id')
   @ApiOperation({ summary: 'Get category by ID' })
   @ApiResponse({ status: 200, type: NewsCategoryResponse })
-  async getCategoryById(@Param('id') id: string): Promise<NewsCategoryResponse> {
+  async getCategoryById(
+    @Param('id') id: string,
+  ): Promise<NewsCategoryResponse> {
     const category = await this.newsService.getCategoryById(id);
     if (!category) throw new NotFoundException('Category not found');
     return this.newsMapper.toCategoryResponse(category);
